@@ -1,27 +1,24 @@
 let board;
-let boardWidth = 360;
-let boardHeight = 640;
+let boardWidth;
+let boardHeight;
 let context;
-// those are the bird dimensions
 
 let birdWidth = 34;
 let birdHeight = 24;
-let birdX = boardWidth / 8;
-let birdY = boardHeight / 2;
 let birdImg;
 
 let bird = {
-    x : birdX,
-    y : birdY,
+    x : 0,
+    y : 0,
     width : birdWidth,
     height : birdHeight
-}
+};
 
 //pipes
 let pipeArray = [];
-let pipewidth = 64;
+let pipeWidth = 64;
 let pipeHeight = 512;
-let pipeX = boardWidth;
+let pipeX;
 let pipeY = 0;
 
 let topPipeImg;
@@ -29,7 +26,7 @@ let bottomPipeImg;
 
 //game physics
 let velocityX = -2; //pipes moving left speed
-let velocutyY =0; //bird jump speed
+let velocityY =0; //bird jump speed
 let gravity = 0.4; //bird fallind down speed
 
 let gameOver = false;
@@ -37,13 +34,19 @@ let score = 0;
 
 window.onload = function() {
     board = document.getElementById("board");
+    board.width = window.innerWidth;
+    board.height = window.innerHeight;
     boardHeight = board.height;
     boardWidth = board.width;
+    
     context = board.getContext("2d");
 
+    bird.x = boardWidth / 8;
+    bird.y = boardHeight / 2;
+    pipeX = boardWidth;
 
     context.fillStyle = "skyblue";
-    context.fillRect(bird.x, bird.y, bird.width, bird.height);
+    context.fillRect(0, 0, boardWidth, boardHeight);
 //load bird images
     birdImg = new Image();
     birdImg.src = "./flappybird2.png";
@@ -59,24 +62,33 @@ window.onload = function() {
 
     requestAnimationFrame(update);
     setInterval(placePipes, 1500); //1.5 seconds
-    document.addEventListner("keydown", moveBird);
+    document.addEventListener("keydown", moveBird);
+
+    window.addEventListener('resize', () => {
+        board.width = window.innerWidth;
+        board.height = window.innerHeight;
+        boardWidth = board.width;
+        boardHeight = board.height;
+
+        bird.x = boardWidth / 8;
+        bird.y = boardHeight / 2;
+        pipeX = boardWidth;
+    });
 }
 
 function update() {
 requestAnimationFrame(update);
-    if (gameOver) {
-        return;
-    }
+    if (gameOver) return;
+    
     context.clearRect(0, 0, board.width, board.height);
 
     //bird
     velocityY += gravity;
-    bird.y += Math.max(bird.y + velocityY, 0); //apply gravity to current bird.y or limit the bird to the top of the board
+    bird.y = Math.max(bird.y + velocityY, 0); //apply gravity to current bird.y or limit the bird to the top of the board
     context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
 
-    if (bird.y > board.height) {
-        gameOver = true;
-    }
+    if (bird.y > board.height) gameOver = true;
+
     //pipes
     for (let i = 0; i < pipeArray.length; i++) {
         let pipe = pipeArray[i];
@@ -88,21 +100,20 @@ requestAnimationFrame(update);
             score+= 0.5; // since there are 2 pipes, 2 * 0.5 = 1
             pipe.passed = true
         }
-        if (detectCollision(bird, pipe)) {
-            gameOver = true;
-        }
+        if (detectCollision(bird, pipe)) gameOver = true;
+    
     }
     // clear the pipes
-    while (pipeArray.length > 0 && pipeArray[0].x < -pipewidth) {
+    while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth) {
         pipeArray.shift(); //remove the first element from the array
     }
     
     //score
     context.fillStyle = "pink"; // to display score
-    context.font = "40px sans-serif";
+    context.font = Math.floor(boardWidth / 15) + "px sans-serif";
     context.fillText(score, 5, 45);
     if (gameOver) {
-        context.fillText("GAME OVER, try again", 5, 90)
+        context.fillText("GAME OVER, try again", 5, Math.floor(boardHeight / 7))
     }
 }
 
@@ -110,41 +121,40 @@ requestAnimationFrame(update);
 //0 -> -128 (pipeHeight/4)
 // 1 -> -128 - 256 (pipeHeight/4 - pipeHeight/2) = -3/4 pipeHeight
 function placePipes() {
-    if (gameOver) {
-        return;
-    }
+    if (gameOver) return;
+    
     let randomPipeY = pipeY - pipeHeight/4 - Math.random()*(pipeHeight/2); 
-    let openingSpace = board.height/4;
+    let openingSpace = boardHeight/4;
     let topPipe = {
         img : topPipeImg,
         x : pipeX,
         y : randomPipeY,
-        width : pipewidth,
+        width : pipeWidth,
         height : pipeHeight,
         passed : false
-    }
+    };
     pipeArray.push(topPipe); //pipe added to array
     
     let bottomPipe = {
         img : bottomPipeImg,
         x : pipeX,
         y : randomPipeY + pipeHeight + openingSpace,
-        width : pipewidth,
+        width : pipeWidth,
         height : pipeHeight,
         passed : false
-    }
+    };
      pipeArray.push(bottomPipe); //pipe has been added to the array   
 
     
 }
 
 function moveBird(e) {
-    if (e.code == "space" || e.code == "ArrowUp" || e.code == "keyX") {
+   if (e.code == "Space" || e.code == "ArrowUp" || e.code == "KeyX") {
         //jump
         velocityY = -6;
         // reset the game
         if (gameOver) {
-            bird.y = birdY;
+            bird.y = boardHeight / 2;
             pipeArray = [];
             score = 0;
             gameOver = false;
@@ -156,7 +166,8 @@ function detectCollision(a, b) {
 return a.x < b.x + b.width &&
        a.x + a.width > b.x &&
        a.y < b.y + b.height &&
-       a.y + a.height > b.height; //checks collision
+       a.y + a.height > b.y;
+    //checks collision
 }
 
 
