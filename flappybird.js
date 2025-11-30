@@ -58,7 +58,7 @@ window.onload = function() {
 
     requestAnimationFrame(update);
     setInterval(placePipes, 1500); //1.5 seconds
-    document.addEventListner("keydown", moveBird);
+    document.addEventListener("keydown", moveBird);
 }
 
 function update() {
@@ -69,13 +69,16 @@ requestAnimationFrame(update);
     context.clearRect(0, 0, board.width, board.height);
 
     //bird
-    velocityY += gravity;
-    bird.y += Math.max(bird.y + velocityY, 0); //apply gravity to current bird.y or limit the bird to the top of the board
-    context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+   //bird
+velocityY += gravity;
+bird.y += velocityY;
+bird.y = Math.max(bird.y, 0); // keep bird on screen top
+context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
 
-    if (bird.y > board.height) {
-        gameOver = true;
-    }
+
+   if (bird.y + bird.height > board.height) {
+    gameOver = true;
+}
     //pipes
     for (let i = 0; i < pipeArray.length; i++) {
         let pipe = pipeArray[i];
